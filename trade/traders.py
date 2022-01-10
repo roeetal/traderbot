@@ -49,17 +49,17 @@ class PairsTrader(BaseTrader):
         self.pair_b = pair_b
         self.id = abs(hash(f"{pair_a}{pair_b}")) % (10 ** 6)
 
-    def _ez_limit_order(self, order_type: str, pair: str, userref: int, limit_price: float, volume: float, fos: float,
+    def _ez_limit_order(self, order_type: str, pair: str, userref: int, limit_price: float, volume: float, th: float,
                         leverage: int = None):
-        assert (0 < fos < 1, "Factor of safety must be between 0-1")
-        fos = (1 + fos) if order_type == 'buy' else (1 - fos)
+        assert (0 < th < 1, "Factor of safety must be between 0-1")
+        th = (1 + th) if order_type == 'buy' else (1 - th)
         r = self.client.query_private('AddOrder', data=dict(
             userref=userref,
             ordertype='limit',
             type=order_type,
             volume=round(volume, 8),
             pair=pair,
-            price=round(fos * limit_price, 4),
+            price=round(th * limit_price, 4),
             timeinforce="IOC",
             leverage=leverage,
         ))
@@ -69,7 +69,7 @@ class PairsTrader(BaseTrader):
 
         orders = []
         for o_id in r['txid']:
-            o = self.query_order(txid=o_id, userref=userref, trade=True)
+            o = self.query_order(txid=o_id, userref=userref, trades=True)
             orders.append(o)
             status = o[o_id]['status']
             assert (status == 'closed', f"[Trader] Order ({o_id}) not closed, status: {status}.")
@@ -91,26 +91,26 @@ class PairsTrader(BaseTrader):
 
         return net, net / cost
 
-    def go_long(self, counter: int, volume_a: float, volume_b: float, price_a: float, price_b: float, fos: float):
+    def go_long(self, counter: int, volume_a: float, volume_b: float, price_a: float, price_b: float, th: float):
         ref = int(f"{self.id}{counter}")
         try:
             r_a, o_a = self._ez_limit_order(order_type='sell', pair=self.pair_a, userref=ref, limit_price=price_a,
-                                            volume=volume_a, fos=fos, leverage=2)
+                                            volume=volume_a, th=th, leverage=2)
             r_b, o_b = self._ez_limit_order(order_type='buy', pair=self.pair_b, userref=ref, limit_price=price_b,
-                                            volume=volume_b, fos=fos, leverage=2)
+                                            volume=volume_b, th=th, leverage=2)
         except Exception as e:
             logger.error(f"[Trader] Failed to open long positions: {e}")
             raise e
 
         return r_a, r_b, o_a, o_b
 
-    def go_short(self, counter: int, volume_a: float, volume_b: float, price_a: float, price_b: float, fos: float):
+    def go_short(self, counter: int, volume_a: float, volume_b: float, price_a: float, price_b: float, th: float):
         ref = int(f"{self.id}{counter}")
         try:
             r_a, o_a = self._ez_limit_order(order_type='buy', pair=self.pair_a, userref=ref, limit_price=price_a,
-                                            volume=volume_a, fos=fos, leverage=2)
+                                            volume=volume_a, th=th, leverage=2)
             r_b, o_b = self._ez_limit_order(order_type='sell', pair=self.pair_b, userref=ref, limit_price=price_b,
-                                            volume=volume_b, fos=fos, leverage=2)
+                                            volume=volume_b, th=th, leverage=2)
 
         except Exception as e:
             logger.error(f"[Trader] Failed to open short positions: {e}")
@@ -118,17 +118,17 @@ class PairsTrader(BaseTrader):
 
         return r_a, r_b, o_a, o_b
 
-    def close_long(self, counter: int, price_a: float, price_b: float, fos: float):
+    def close_long(self, counter: int, price_a: float, price_b: float, th: float):
         try:
-            _, _, o_a, o_b = self.go_short(counter, 0, 0, price_a, price_b, fos)
+            _, _, o_a, o_b = self.go_short(counter, 0, 0, price_a, price_b, th)
             return self._profits_from_orders(*o_a, *o_b)
         except Exception as e:
             logger.error(f"[Trader] Failed to close long positions: {e}")
             raise e
 
-    def close_short(self, counter: int, price_a: float, price_b: float, fos: float):
+    def close_short(self, counter: int, price_a: float, price_b: float, th: float):
         try:
-            _, _, o_a, o_b = self.go_long(counter, 0, 0, price_a, price_b, fos)
+            _, _, o_a, o_b = self.go_long(counter, 0, 0, price_a, price_b, th)
             return self._profits_from_orders(*o_a, *o_b)
         except Exception as e:
             logger.error(f"[Trader] Failed to close short positions: {e}")

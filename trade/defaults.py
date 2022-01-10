@@ -1,9 +1,8 @@
 import json
 from abc import ABC
+from logging import getLogger, INFO
 from pathlib import Path
 from typing import Dict, Any
-
-from logging import getLogger, INFO
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)

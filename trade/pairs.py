@@ -125,7 +125,7 @@ if __name__ == '__main__':
     parser.add_argument("-bc", "--bake-count", help="bake count", type=int, required=False, default=2)
     parser.add_argument("-v", "--volume", help="volume of pair b", type=float, required=False, default=1.0)
     parser.add_argument("-th", "--threshold", help="limit order threshold", type=float, required=False, default=0.01)
-    parser.add_argument("-h", "--hours", help="interval", type=int, required=False, default=4)
+    parser.add_argument("-hr", "--hours", help="interval", type=int, required=False, default=4)
     args = parser.parse_args()
 
     strategy = Pairs(args.pair_a, args.pair_b, args.path, args.bake_count, args.volume, args.threshold)

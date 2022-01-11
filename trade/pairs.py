@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from enum import Enum
 from logging import getLogger, INFO, basicConfig, DEBUG, Formatter, CRITICAL, ERROR
 from signal import signal, SIGINT
+from time import sleep
 from typing import Dict, Any
 
 import numpy as np
@@ -124,7 +125,10 @@ if __name__ == '__main__':
     parser.add_argument("-bc", "--bake-count", help="bake count", type=int, required=False, default=2)
     parser.add_argument("-v", "--volume", help="volume of pair b", type=float, required=False, default=1.0)
     parser.add_argument("-th", "--threshold", help="limit order threshold", type=float, required=False, default=0.01)
+    parser.add_argument("-h", "--hours", help="interval", type=int, required=False, default=4)
     args = parser.parse_args()
 
     strategy = Pairs(args.pair_a, args.pair_b, args.path, args.bake_count, args.volume, args.threshold)
-    strategy()
+    while True:
+        strategy()
+        sleep(60*60*args.hours)

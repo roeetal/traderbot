@@ -115,7 +115,7 @@ class Pairs(Stateful):
         else:
             logger.debug(f"[Strategy] Incrementing bake count: {self.counter}")
             self.model.save_state()
-            sleep_time = 15
+            sleep_time = 4 * 60 * 60
 
         self.save_state()
 

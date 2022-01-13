@@ -134,4 +134,4 @@ dmypy.json
 # Project folders
 /logs
 /states
-*.private.py
+/trade/private.py

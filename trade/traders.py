@@ -1,12 +1,12 @@
 from abc import ABC
-from logging import getLogger, INFO
+from logging import getLogger, DEBUG
 
 from krakenex import API
 
 from trade.private import KEY, SECRET
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(DEBUG)
 
 
 class BaseTrader(ABC):
@@ -37,8 +37,8 @@ class BaseTrader(ABC):
     @staticmethod
     def _handle_request(r):
         if r['error']:
-            logger.error(f"[API] Error handling request: {r['error']}")
-            raise Exception(f"[API] Error handling request: {r['error']}")
+            logger.error(f"Error handling request: {r['error']}")
+            raise Exception(f"Error handling request: {r['error']}")
         return r['result']
 
 
@@ -65,7 +65,7 @@ class PairsTrader(BaseTrader):
         ))
         r = self._handle_request(r)
 
-        logger.debug(f"[Trader] {r['descr']['order']}")
+        logger.debug(f"{r['descr']['order']}")
 
         orders = []
         for o_id in r['txid']:
@@ -99,7 +99,7 @@ class PairsTrader(BaseTrader):
             r_b, o_b = self._ez_limit_order(order_type='buy', pair=self.pair_b, userref=ref, limit_price=price_b,
                                             volume=volume_b, th=th, leverage=2)
         except Exception as e:
-            logger.error(f"[Trader] Failed to open long positions: {e}")
+            logger.error(f"Failed to open long positions: {e}")
             raise e
 
         return r_a, r_b, o_a, o_b
@@ -113,7 +113,7 @@ class PairsTrader(BaseTrader):
                                             volume=volume_b, th=th, leverage=2)
 
         except Exception as e:
-            logger.error(f"[Trader] Failed to open short positions: {e}")
+            logger.error(f"Failed to open short positions: {e}")
             raise e
 
         return r_a, r_b, o_a, o_b
@@ -123,7 +123,7 @@ class PairsTrader(BaseTrader):
             _, _, o_a, o_b = self.go_short(counter, 0, 0, price_a, price_b, th)
             return self._profits_from_orders(*o_a, *o_b)
         except Exception as e:
-            logger.error(f"[Trader] Failed to close long positions: {e}")
+            logger.error(f"Failed to close long positions: {e}")
             raise e
 
     def close_short(self, counter: int, price_a: float, price_b: float, th: float):
@@ -131,5 +131,5 @@ class PairsTrader(BaseTrader):
             _, _, o_a, o_b = self.go_long(counter, 0, 0, price_a, price_b, th)
             return self._profits_from_orders(*o_a, *o_b)
         except Exception as e:
-            logger.error(f"[Trader] Failed to close short positions: {e}")
+            logger.error(f"Failed to close short positions: {e}")
             raise e

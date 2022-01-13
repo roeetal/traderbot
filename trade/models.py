@@ -1,11 +1,11 @@
-from logging import getLogger, INFO
+from logging import getLogger, DEBUG
 
 import numpy as np
 
 from trade.defaults import Stateful
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(DEBUG)
 
 
 class KalmanOLS(Stateful):

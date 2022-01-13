@@ -1,11 +1,11 @@
 import json
 from abc import ABC
-from logging import getLogger, INFO
+from logging import getLogger, DEBUG
 from pathlib import Path
 from typing import Dict, Any
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(DEBUG)
 
 
 class Stateful(ABC):
@@ -14,12 +14,12 @@ class Stateful(ABC):
         self.path = Path(path)
 
     def save_state(self) -> None:
-        logger.info(f"Saving state to {str(self.path)}")
+        logger.debug(f"Saving state to {str(self.path)}")
         with open(str(self.path.absolute()), 'w+') as f:
             json.dump(self.get_state(), f)
 
     def load_state(self) -> Dict[str, Any]:
-        logger.info(f"Loading state from {str(self.path)}")
+        logger.debug(f"Loading state from {str(self.path)}")
         with open(str(self.path.absolute()), 'r+') as f:
             state = json.load(f)
         return state

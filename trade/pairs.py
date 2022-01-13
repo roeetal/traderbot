@@ -39,7 +39,8 @@ class Position(str, Enum):
 
 class Pairs(Stateful):
 
-    def __init__(self, pair_a: str, pair_b: str, path: str, bake_count: int, volume: float, th: float, sleep_time: int):
+    def __init__(self, pair_a: str, pair_b: str, path: str, bake_count: int, volume: float, th: float, sleep_time: int,
+                 save_time: int):
         super(Pairs, self).__init__(path=os.path.join(path, f'{pair_a}_{pair_b}_strategy'))
         self.pair_a = pair_a
         self.pair_b = pair_b
@@ -48,6 +49,7 @@ class Pairs(Stateful):
         self.trader = PairsTrader(pair_a, pair_b)
         self.th = th
         self.sleep_time = sleep_time
+        self.save_time = save_time
         self.volume_b = round(volume, 8)
         try:
             state = self.load_state()
@@ -71,55 +73,55 @@ class Pairs(Stateful):
 
         ticker_a, ticker_b = (self.trader.get_ticker(x)[x] for x in (self.pair_a, self.pair_b))
         price_a, price_b = (self.trader.mid_price(ticker) for ticker in (ticker_a, ticker_b))
-        logger.debug(f"[Strategy] {self.pair_a}: {price_a:.2f}, {self.pair_b}: {price_b:.2f}")
+        logger.debug(f"{self.pair_a}: {price_a:.2f}, {self.pair_b}: {price_b:.2f}")
         e, q, t = self.model(price_a, price_b)
-        logger.debug(f"[Strategy] error: ${e:.4f}, var: $${q:.4f}, b_weight:{t:.4f}")
+        logger.debug(f"error: ${e:.4f}, var: $${q:.4f}, b_weight:{t:.4f}")
 
         if self.counter > self.bake_count:
             old_position = self.position
 
             if self.position == Position.NOT_INVESTED:
                 if e < - np.sqrt(q):
-                    logger.info(f"[Strategy] Going long: ${e:.2f} < - ${np.sqrt(q):.2f}")
+                    logger.info(f"Going long: ${e:.2f} < - ${np.sqrt(q):.2f}")
                     volume_a = round(self.volume_b * t, 8)
                     self.trader.go_long(self.counter, volume_a, self.volume_b, price_a, price_b, self.th)
                     self.position = Position.LONG
                 elif e > np.sqrt(q):
-                    logger.info(f"[Strategy] Going short: {e:.2f} > {np.sqrt(q):.2f}")
+                    logger.info(f"Going short: {e:.2f} > {np.sqrt(q):.2f}")
                     volume_a = round(self.volume_b * t, 8)
                     self.trader.go_short(self.counter, volume_a, self.volume_b, price_a, price_b, self.th)
                     self.position = Position.SHORT
                 else:
-                    logger.debug(f"[Strategy] Abstaining")
+                    logger.debug(f"Abstaining")
             elif self.position == Position.LONG:
                 if e > - np.sqrt(q):
-                    logger.info(f"[Strategy] Closing long: {e:.2f} > - {np.sqrt(q):.2f}")
+                    logger.info(f"Closing long: {e:.2f} > - {np.sqrt(q):.2f}")
                     p, r = self.trader.close_long(self.counter, price_a, price_b, self.th)
-                    logger.info(f"[Strategy] Profit: ${p:.2f}")
-                    logger.info(f"[Strategy] Return: {r * 100:.2f}%")
+                    logger.info(f"Profit: ${p:.2f}")
+                    logger.info(f"Return: {r * 100:.2f}%")
                     self.position = Position.NOT_INVESTED
                 else:
-                    logger.debug(f"[Strategy] Staying long")
+                    logger.debug(f"Staying long")
             elif self.position == Position.SHORT:
                 if e < np.sqrt(q):
-                    logger.info(f"[Strategy] Closing short: {e:.2f} < {np.sqrt(q):.2f}")
+                    logger.info(f"Closing short: {e:.2f} < {np.sqrt(q):.2f}")
                     p, r = self.trader.close_short(self.counter, price_a, price_b, self.th)
-                    logger.info(f"[Strategy] Profit: ${p:.2f}")
-                    logger.info(f"[Strategy] Return: {r * 100:.2f}%")
+                    logger.info(f"Profit: ${p:.2f}")
+                    logger.info(f"Return: {r * 100:.2f}%")
                     self.position = Position.NOT_INVESTED
                 else:
-                    logger.debug(f"[Strategy] Staying short")
+                    logger.debug(f"Staying short")
 
-            if old_position != self.position:
+            if old_position != self.position or self.counter % (self.save_time / self.sleep_time) == 0:
                 self.model.save_state()
         else:
-            logger.debug(f"[Strategy] Incrementing bake count: {self.counter}")
+            logger.debug(f"Incrementing bake count: {self.counter}")
             self.model.save_state()
             sleep_time = 4 * 60 * 60
 
         self.save_state()
 
-        logger.debug(f"[Strategy] Returning sleep time: {sleep_time} seconds")
+        logger.debug(f"Returning sleep time: {sleep_time} seconds")
         return sleep_time
 
 
@@ -133,10 +135,12 @@ if __name__ == '__main__':
     parser.add_argument("-bc", "--bake-count", help="bake count", type=int, required=False, default=2)
     parser.add_argument("-v", "--volume", help="volume of pair b", type=float, required=False, default=1.0)
     parser.add_argument("-th", "--threshold", help="limit order threshold", type=float, required=False, default=0.01)
-    parser.add_argument("-st", "--sleep-time", help="sleep time in seconds", type=int, required=False, default=60)
+    parser.add_argument("-st", "--sleep-time", help="sleep time in seconds", type=int, required=False, default=30)
+    parser.add_argument("-sc", "--save-time", help="max time before save", type=int, required=False, default=46800)
     args = parser.parse_args()
 
-    strategy = Pairs(args.pair_a, args.pair_b, args.path, args.bake_count, args.volume, args.threshold, args.sleep_time)
+    strategy = Pairs(args.pair_a, args.pair_b, args.path, args.bake_count, args.volume, args.threshold, args.sleep_time,
+                     args.save_time)
     while True:
         st = strategy()
         sleep(st)

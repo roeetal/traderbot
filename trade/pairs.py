@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--volume", help="volume of pair b", type=float, required=False, default=1.0)
     parser.add_argument("-th", "--threshold", help="limit order threshold", type=float, required=False, default=0.01)
     parser.add_argument("-st", "--sleep-time", help="sleep time in seconds", type=int, required=False, default=30)
-    parser.add_argument("-sc", "--save-time", help="max time before save", type=int, required=False, default=46800)
+    parser.add_argument("-svt", "--save-time", help="max time before save", type=int, required=False, default=46800)
     args = parser.parse_args()
 
     strategy = Pairs(args.pair_a, args.pair_b, args.path, args.bake_count, args.volume, args.threshold, args.sleep_time,

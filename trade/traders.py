@@ -51,7 +51,7 @@ class PairsTrader(BaseTrader):
 
     def _ez_limit_order(self, order_type: str, pair: str, userref: int, limit_price: float, volume: float, th: float,
                         leverage: int = None):
-        assert (0 < th < 1, "Factor of safety must be between 0-1")
+        assert 0 < th < 1, "Factor of safety must be between 0-1"
         th = (1 + th) if order_type == 'buy' else (1 - th)
         r = self.client.query_private('AddOrder', data=dict(
             userref=userref,
@@ -72,7 +72,7 @@ class PairsTrader(BaseTrader):
             o = self.query_order(txid=o_id, userref=userref, trades=True)
             orders.append(o)
             status = o[o_id]['status']
-            assert (status == 'closed', f"[Trader] Order ({o_id}) not closed, status: {status}.")
+            assert status == 'closed', f"[Trader] Order ({o_id}) not closed, status: {status}."
 
         return r, orders
 

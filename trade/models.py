@@ -49,8 +49,6 @@ class KalmanOLS(Stateful):
         self.theta += At * et
         self.C = self.R - At.dot(F).dot(self.R)
 
-        self.save_state()
-
         return et, Qt, self.theta[0, 0]
 
     @staticmethod

@@ -81,21 +81,21 @@ class Pairs(Stateful):
             old_position = self.position
 
             if self.position == Position.NOT_INVESTED:
-                if e < - np.sqrt(q):
-                    logger.info(f"Going long: ${e:.2f} < - ${np.sqrt(q):.2f}")
+                if e < - 1.1 * np.sqrt(q):
+                    logger.info(f"Going long: ${e:.2f} < - ${1.1 * np.sqrt(q):.2f}")
                     volume_a = round(self.volume_b * t, 8)
                     self.trader.go_long(self.counter, volume_a, self.volume_b, price_a, price_b, self.th)
                     self.position = Position.LONG
-                elif e > np.sqrt(q):
-                    logger.info(f"Going short: {e:.2f} > {np.sqrt(q):.2f}")
+                elif e > 1.1 * np.sqrt(q):
+                    logger.info(f"Going short: {e:.2f} > {1.1 * np.sqrt(q):.2f}")
                     volume_a = round(self.volume_b * t, 8)
                     self.trader.go_short(self.counter, volume_a, self.volume_b, price_a, price_b, self.th)
                     self.position = Position.SHORT
                 else:
                     logger.debug(f"Abstaining")
             elif self.position == Position.LONG:
-                if e > - np.sqrt(q):
-                    logger.info(f"Closing long: {e:.2f} > - {np.sqrt(q):.2f}")
+                if e > - 0.9 * np.sqrt(q):
+                    logger.info(f"Closing long: {e:.2f} > - {0.9 * np.sqrt(q):.2f}")
                     p, r = self.trader.close_long(self.counter, price_a, price_b, self.th)
                     logger.info(f"Profit: ${p:.2f}")
                     logger.info(f"Return: {r * 100:.2f}%")
@@ -103,8 +103,8 @@ class Pairs(Stateful):
                 else:
                     logger.debug(f"Staying long")
             elif self.position == Position.SHORT:
-                if e < np.sqrt(q):
-                    logger.info(f"Closing short: {e:.2f} < {np.sqrt(q):.2f}")
+                if e < 0.9 * np.sqrt(q):
+                    logger.info(f"Closing short: {e:.2f} < {0.9 * np.sqrt(q):.2f}")
                     p, r = self.trader.close_short(self.counter, price_a, price_b, self.th)
                     logger.info(f"Profit: ${p:.2f}")
                     logger.info(f"Return: {r * 100:.2f}%")

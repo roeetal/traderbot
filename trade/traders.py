@@ -73,6 +73,7 @@ class PairsTrader(BaseTrader):
         for o_id in r['txid']:
             o = self.query_order(txid=o_id, userref=userref, trades=True)
             orders.append(o)
+            logger.debug(f"Verifying order close: {o}")
             status = o[o_id]['status']
             assert status == 'closed', f"[Trader] Order ({o_id}) not closed, status: {status}."
 

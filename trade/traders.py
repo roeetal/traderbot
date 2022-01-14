@@ -53,7 +53,7 @@ class PairsTrader(BaseTrader):
                         leverage: int = None):
         assert 0 < th < 1, "Factor of safety must be between 0-1"
         th = (1 + th) if order_type == 'buy' else (1 - th)
-        r = self.client.query_private('AddOrder', data=dict(
+        data = dict(
             userref=userref,
             ordertype='limit',
             type=order_type,
@@ -62,7 +62,9 @@ class PairsTrader(BaseTrader):
             price=round(th * limit_price, 4),
             timeinforce="IOC",
             leverage=leverage,
-        ))
+        )
+        logger.debug(f"Adding order with data: {data}")
+        r = self.client.query_private('AddOrder', data=data)
         r = self._handle_request(r)
 
         logger.debug(f"{r['descr']['order']}")
